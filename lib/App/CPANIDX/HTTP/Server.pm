@@ -11,13 +11,13 @@ use HTTP::Server::Simple::CGI;
 use base qw(HTTP::Server::Simple::CGI);
  
 sub dsn {
-  my ($self,$dsn) = @_;
+  my ($self,$dsn,$user,$pass) = @_;
   if ( $dsn and $self->{_dbh} ) {
     warn "Already have a database connection, thanks\n";
     return;
   }
   if ( $dsn ) {
-    $self->{_dbh} = DBI->connect($dsn,'','') or die $DBI::errstr, "\n";
+    $self->{_dbh} = DBI->connect($dsn,$user,$pass) or die $DBI::errstr, "\n";
     $self->{_dsn} = $dsn;
     return;
   }
@@ -36,7 +36,6 @@ sub handle_request {
    if ( $root eq 'cpanidx' ) {
       $search = '0' if $type =~ /^next/ and !$search;
       my @results = $self->_search_db( $type, $search );
-      #$enc = 'yaml' unless $enc and $enc =~ /^(yaml|json|xml|html)$/i;
       $enc = 'yaml' unless $enc and grep { lc($enc) eq $_ } App::CPANIDX::Renderer->renderers();
       my $ren = App::CPANIDX::Renderer->new( \@results, $enc );
       my ($ctype, $string) = $ren->render( $type );
@@ -75,9 +74,26 @@ sub _search_db {
 
 =head1 SYNOPSIS
 
+  use strict;
+  use warnings;
+  use App::CPANIDX::HTTP::Server;
+
+  my $dsn = 'dbi:SQLite:dbname=cpanidx.db';
+  my $user = '';
+  my $pass = '';
+  my $port = 8082; # the port to listen for requests on
+
+  my $server = App::CPANIDX::HTTP::Server->new( $port );
+  $server->dsn( $dsn, $user, $pass );
+  $server->run();
+
+  # Requests can now be directed to http://nameofyourserver:8082/cpanidx/
+
 =head1 DESCRIPTION
 
-Meep
+App::CPANIDX::HTTP::Server is a L<HTTP::Server::Simple> based server for CPANIDX.
+Use the C<cpanidx-gendb> script provided by L<App::CPANIDX> to generate a CPANIDX
+database and then use this module to serve the associated data.
 
 =head1 METHODS
 
@@ -85,12 +101,28 @@ Meep
 
 =item C<new>
 
+Start a new instance of App::CPANIDX::HTTP::Server. Takes one option, the port number to
+start listening on for requests. If it is not provided will assign a randomly choosen port
+number for you.
+
 =item C<dsn>
+
+After running C<new>, but before calling C<run>, call this to assign the database details to 
+the server. Takes three arguments: a L<DBI> C<DSN> string, a username (if applicable) and a 
+password (if applicable).
 
 =item C<run>
 
+Runs the server and starts handling requests.
+
 =item C<handle_request>
 
+Deals with requests. No user serviceable parts.
+
 =back
+
+=head1 SEE ALSO
+
+L<App::CPANIDX>
 
 =cut

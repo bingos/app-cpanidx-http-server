@@ -1,0 +1,99 @@
+#!perl
+
+package cpanidx_httpserver;
+
+# ABSTRACT: HTTP::Server::Simple based server for CPANIDX
+
+use strict;
+use warnings;
+use Config::Tiny;
+use Getopt::Long;
+use App::CPANIDX::HTTP::Server;
+
+my $config = 'cpanidx.ini';
+
+GetOptions( 'config=s', \$config, );
+
+my $ini = Config::Tiny->new();
+
+my $port;
+my $dsn;
+my $user;
+my $pass;
+my $cfg = $ini->read( $config ) or warn $ini->errstr, "\n";
+
+if ( $cfg ) {
+  $port = $cfg->{_}->{port};
+  $dsn = $cfg->{_}->{dsn};
+  $user = $cfg->{_}->{user};
+  $pass = $cfg->{_}->{pass};
+}
+
+unless ( $dsn ) {
+  $dsn = 'dbi:SQLite:dbname=cpanidx.db';
+  warn "Using '$dsn'\n";
+}
+
+my $server = App::CPANIDX::HTTP::Server->new( $port );
+$server->dsn( $dsn, $user, $pass );
+$server->run();
+exit 0;
+
+=pod
+
+=head1 SYNPOSIS
+
+  # cpanidx.ini
+
+  port=8082
+  dsn=dbi:SQLite:dbname=cpanidx.db
+  
+  $ cpanidx_httpserver --config cpanidx.ini
+
+=head1 DESCRIPTION
+
+C<cpanidx_httpserver> is a L<HTTP::Server::Simple> based server for L<App::CPANIDX>.
+
+=head1 CONFIGURATION
+
+Configuration is stored in an L<Config::Tiny> style initialisation file. By default
+it looks for a C<cpanidx.ini> in the current working directory. This can be amended
+by using the C<--config> command line switch.
+
+If no previous configuration is found, the script will default to using L<DBD::SQLite>
+based database C<cpanidx.db> in the current working directory.
+
+The following configuration options are available:
+
+=over
+
+=item C<dsn>
+
+Specify the L<DBI> C<DSN> string to use.
+
+=item C<user>
+
+Specify the username to use with the C<dsn> (if applicable).
+
+=item C<pass>
+
+Specify the password to use with the C<dsn> (if applicable).
+
+=item C<port>
+
+Specify the listening port to use. The default is a randomly assigned port.
+
+=back
+
+=head1 COMMAND LINE OPTIONS
+
+=over
+
+=item C<--config>
+
+Specify a configuration file to use. The default is to use C<cpanidx.ini> in the current working
+directory.
+
+=back
+
+=cut
