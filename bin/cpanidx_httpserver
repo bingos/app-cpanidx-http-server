@@ -97,6 +97,10 @@ Specify the listening port to use. The default is C<8080>.
 Specify a configuration file to use. The default is to use C<cpanidx.ini> in the current working
 directory.
 
+=item C<--port>
+
+Specify the listening port to use. The default is C<8080>.
+
 =back
 
 =cut
