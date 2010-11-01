@@ -33,7 +33,7 @@ sub handle_request {
    warn $path, "\n";
    my ($root,$enc,$type,$search) = grep { $_ } split m#/#, $path;
 
-   if ( $root eq 'cpanidx' ) {
+   if ( $root eq 'cpanidx' and $enc and $type ) {
       $search = '0' if $type =~ /^next/ and !$search;
       my @results = $self->_search_db( $type, $search );
       $enc = 'yaml' unless $enc and grep { lc($enc) eq $_ } App::CPANIDX::Renderer->renderers();
@@ -102,8 +102,7 @@ database and then use this module to serve the associated data.
 =item C<new>
 
 Start a new instance of App::CPANIDX::HTTP::Server. Takes one option, the port number to
-start listening on for requests. If it is not provided will assign a randomly choosen port
-number for you.
+start listening on for requests. If it is not provided will default to C<8080>.
 
 =item C<dsn>
 
