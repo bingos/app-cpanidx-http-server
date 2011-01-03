@@ -61,7 +61,7 @@ sub _search_db {
       return @results;
     } 
     # send query to dbi
-    if ( my $sth = $dbh->prepare_cached( $sql->[0] ) ) {
+    if ( my $sth = $self->{_dbh}->prepare_cached( $sql->[0] ) ) {
       $sth->execute( ( $sql->[1] ? $search : () ) );
       while ( my $row = $sth->fetchrow_hashref() ) {
         push @results, { %{ $row } };
@@ -70,6 +70,7 @@ sub _search_db {
     else {
       warn $DBI::errstr, "\n";
       return @results;
+    }
   }
   return @results;
 }
